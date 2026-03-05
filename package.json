@@ -1,0 +1,10 @@
+{
+  "name": "xiaohongshu-viral-copy",
+  "version": "1.0.0",
+  "description": "小红书爆款文案生成器",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {}
+}

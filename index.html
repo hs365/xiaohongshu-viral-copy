@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小红书爆款文案生成器</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #ff244 #ff6b2 0%,6b 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 600px; margin: 0 auto; }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 { color: #ff2442; margin-bottom: 8px; font-size: 24px; }
+        .subtitle { color: #666; margin-bottom: 24px; font-size: 14px; }
+        .price { 
+            background: #fff3f3; 
+            padding: 12px; 
+            border-radius: 8px; 
+            margin-bottom: 24px;
+            color: #ff2442;
+            font-weight: bold;
+        }
+        label { display: block; margin-bottom: 8px; color: #333; font-weight: 500; }
+        input, textarea { 
+            width: 100%; 
+            padding: 12px; 
+            border: 2px solid #eee; 
+            border-radius: 8px; 
+            font-size: 16px;
+            margin-bottom: 16px;
+            transition: border-color 0.3s;
+        }
+        input:focus, textarea:focus { outline: none; border-color: #ff2442; }
+        textarea { height: 80px; resize: none; }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #ff2442;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+        }
+        button:hover { background: #e02035; transform: translateY(-2px); }
+        button:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+        
+        .result { margin-top: 24px; display: none; }
+        .result.show { display: block; }
+        .result h3 { color: #333; margin-bottom: 12px; }
+        .result-content {
+            background: #f9f9f9;
+            padding: 16px;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            line-height: 1.6;
+        }
+        .error {
+            background: #fff0f0;
+            color: #ff2442;
+            padding: 16px;
+            border-radius: 8px;
+        }
+        .error a { color: #ff2442; }
+        .loading { text-align: center; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>📕 小红书爆款文案生成器</h1>
+            <p class="subtitle">输入主题，自动生成爆款文案</p>
+            
+            <div class="price">💰 价格：0.01 USDT / 次</div>
+            
+            <label>输入主题（如：职场好物、租房推荐、美妆分享）</label>
+            <input type="text" id="topic" placeholder="输入一个主题..." value="职场好物">
+            
+            <button id="generateBtn" onclick="generate()">生成文案</button>
+            
+            <div class="loading" id="loading" style="display:none;">生成中...</div>
+            
+            <div class="result" id="result">
+                <h3>📝 生成的文案：</h3>
+                <div class="result-content" id="resultContent"></div>
+            </div>
+            
+            <div class="result" id="errorBox">
+                <div class="error" id="errorContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = '/api';
+        
+        async function generate() {
+            const topic = document.getElementById('topic').value.trim();
+            if (!topic) { alert('请输入主题'); return; }
+            
+            const btn = document.getElementById('generateBtn');
+            const loading = document.getElementById('loading');
+            const resultDiv = document.getElementById('result');
+            const errorBox = document.getElementById('errorBox');
+            
+            btn.disabled = true;
+            loading.style.display = 'block';
+            resultDiv.classList.remove('show');
+            errorBox.classList.remove('show');
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        user_id: 'user_' + Date.now(),
+                        topic: topic
+                    })
+                });
+                
+                const data = await response.json();
+                
+                loading.style.display = 'none';
+                btn.disabled = false;
+                
+                if (data.success) {
+                    let content = '';
+                    if (data.hook) content += '🔥 ' + data.hook + '\n\n';
+                    if (data.body) content += data.body.map((b, i) => (i+1) + '. ' + b).join('\n') + '\n\n';
+                    if (data.cta) content += '💬 ' + data.cta + '\n\n';
+                    if (data.hashtags) content += '🏷️ ' + data.hashtags.join(' ');
+                    
+                    document.getElementById('resultContent').textContent = content;
+                    resultDiv.classList.add('show');
+                } else {
+                    let msg = data.message || '生成失败';
+                    if (data.payment_url) {
+                        msg += '\n\n<a href="' + data.payment_url + '" target="_blank">点击充值 USDT</a>';
+                    }
+                    document.getElementById('errorContent').innerHTML = msg;
+                    errorBox.classList.add('show');
+                }
+            } catch (e) {
+                loading.style.display = 'none';
+                btn.disabled = false;
+                document.getElementById('errorContent').textContent = '网络错误，请稍后重试';
+                errorBox.classList.add('show');
+            }
+        }
+    </script>
+</body>
+</html>
